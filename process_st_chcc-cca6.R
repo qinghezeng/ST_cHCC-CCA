@@ -1,6 +1,6 @@
 # Patially based on the https://github.com/maximemeylan/Meylan_et_al_2022/
 
-# Seurat 4.3.0 was used for SCTv2
+# Seurat 4.3.0 was used for SCTransform v2
 
 # To use MAST for DEA, need another version of Seurat (4.1.1)
 # Bug in newer version: invalid name for slot of class “BayesGLMlike”: norm.method
@@ -17,6 +17,12 @@
 # detach("package:Seurat", unload=TRUE) # if already loaded the old version
 # library(Seurat, lib.loc=PATH_RESULTS)
 
+# Additional packages that you may need to install:
+# install.packages("hdf5r", dependencies = T)
+# if (!require("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+# BiocManager::install("glmGamPoi")
+
 library(Seurat)
 library(dplyr)
 library(crayon)
@@ -27,12 +33,12 @@ library(MCPcounter)
 
 res_folder <- PATH_RESULTS
 
-slide_list <- c("A1_manual_count_KRT19",
-                "A2_count_KRT19",
-                "A3_count_KRT19",
-                "A4_count_KRT19",
-                "A5_manual_count_KRT19",
-                "A6_manual_count_KRT19"
+slide_list <- c("A1_manual_count",
+                "A2_count",
+                "A3_count",
+                "A4_count",
+                "A5_manual_count",
+                "A6_manual_count"
 )
 spatial_list <- sapply(slide_list,function(slide){
   print(slide)
@@ -51,15 +57,16 @@ spatial_list <- sapply(slide_list,function(slide){
 
   return(spatial_object_subset)
 })
-save.image(paste0(res_folder,Sys.Date(),"_","seurat_processedv2.RData"))
+save(spatial_list, file=paste0(res_folder,Sys.Date(),"_","seurat_processedv2.RData"))
 
 # load(paste0(res_folder,"2023-01-25_seurat_processedv2.RData"))
+
 # Differential expression analysis
 ## Save DL predictions in "G100" column. 
 ## HCC_High: 100 patches/spots with highest att-weighted HCC scores. ICCA_High: 100 patches/spots with highest att-weighted ICCA scores.
 ## DL_NA: patches/spots excluded by the DL model. Non_info: the rest patches/spots which are not informative.
 for (i in c(1:6)) {
-  dl_class <- read.csv(paste0("PATH_WEIGHTED_HCC_SCORE/weighted_HCC_score_A",
+  dl_class <- read.csv(paste0(PATH_WEIGHTED_HCC_SCORE, "/weighted_HCC_score_A",
                               i, '_rot90.csv'))
   dl_class <- dl_class[,c(-1)]
   spatial_list[[i]] <- AddMetaData(object= spatial_list[[i]],metadata=setNames(dl_class[,'G100'], dl_class[,'barcode']),col.name = 'G100')
